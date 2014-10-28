@@ -130,13 +130,17 @@ Examples
 .. code:: pycon
 
     >>> get_market_density('green_markets.json')
-    {u'STATEN ISLAND': 2, u'BRONX ': 1, u'BROOKLYN': 48, u'BRONX': 31,
+    {u'STATEN ISLAND': 2, u'BROOKLYN': 48, u'BRONX': 32,
     u'MANHATTAN': 39, u'QUEENS': 16}
 
 .. note::
 
     I forced the borough names to uppercase here to make it easier to correlate
     borough data between the two data sources.
+    
+.. warning::
+
+    There's a bad record in one of the boro names (it has an extra space -- how would you normalize the name?)
 
 Task 03: Relating Data and Writing a File
 =========================================
