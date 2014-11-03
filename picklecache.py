@@ -11,7 +11,6 @@ class Pickles(object):
     """
     Creates a class for creating files using pickle
     """
-    
     def __init__(self, file_path='datastore.pkl'):
         self.__file_path = file_path
         self.__file_object = None
@@ -75,12 +74,11 @@ class Pickles(object):
         """
         filehandler = open(self.__file_object)
         pickle.dump(self.__data, filehandler)
-        fh.close()
+        filehandler.close()
         if reopen:
             self.open()
-
 
     def close(self):
         """Runs the flush() method
         """
-        self.flush(self, True)
+        self.flush(True)

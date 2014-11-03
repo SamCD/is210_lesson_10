@@ -30,10 +30,10 @@ def get_score_summary(filename):
         if j not in scores:
             scores[j] = (0, 0)
         scores[j] = [scores[j][0] + 1, scores[j][1] + GRADING.get(i)]
-    for p in scores.values():
-        p[1] = p[1] / p[0]
-    for k, v in scores.iteritems():
-        scores[k] = tuple(v)
+    for value in scores.values():
+        value[1] = value[1] / value[0]
+    for key, value in scores.iteritems():
+        scores[key] = tuple(value)
     return scores
 
 import json
@@ -68,9 +68,9 @@ def correlate_data(file1, file2, newfile):
     food = get_score_summary(file1)
     green = get_market_density(file2)
     out = {}
-    for k, p in food.iteritems():
+    for key, value in food.iteritems():
         for j in green.values():
-            out[k] = (v[1], j / v[0])
+            out[key] = (value[1], j / value[0])
     filehandler = open(newfile, 'w')
     json.dump(out, filehandler)
     filehandler.close()
