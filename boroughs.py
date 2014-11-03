@@ -3,7 +3,7 @@
 """NYC Restaurant Inspection
     """
 
-GRADING = {'A': 100.0, 'B': 90.0, 'C': 80.0, 'D': 70.0, 'F': 60.0}
+GRADING = {'A': 1.0, 'B': 0.9, 'C': 0.8, 'D': 0.7, 'F': 0.6}
 
 
 def get_score_summary(filename):
@@ -17,22 +17,23 @@ def get_score_summary(filename):
     'MANHATTAN': (748, 0.9771390374331531), 'QUEENS':
     (414, 0.9719806763285017)}
     """
-    
-    fh = open(filename, 'r')
-    line = fh.readline()
+    filehandler = open(filename, 'r')
+    line = filehandler.readline()
     restos = {}
     scores = {}
     while line:
         if line[0] not in restos and line[10] is True and line[10] != 'P':
             restos[line[0]] = (line[10], line[1])
-            line = fh.readline()
-        fh.close()
+            line = filehandler.readline()
+        filehandler.close()
     for i, j in restos.values():
         if j not in scores:
             scores[j] = (0, 0)
-        scores[j] = (scores[j][0] + 1, scores[j][1] + GRADING.get(i))
+        scores[j] = [scores[j][0] + 1, scores[j][1] + GRADING.get(i)]
+    for p in scores.values():
+        p[1] = p[1] / p[0]
     for k, v in scores.iteritems():
-        v[1] = v / k
+        scores[k] = tuple(v)
     return scores
 
 import json
@@ -47,14 +48,14 @@ def get_market_density(filename):
     {u'STATEN ISLAND': 2, u'BRONX ': 1, u'BROOKLYN': 48, u'BRONX': 31,
     u'MANHATTAN': 39, u'QUEENS': 16}
     """
-    
-    fh = open(filename, 'r')
-    newdict = json.load(fh)
+    filehandler = open(filename, 'r')
+    newdict = json.load(filehandler)
     markets = {}
     for i in newdict.get('data'):
         if i[8].upper() not in markets:
             markets[i[8].upper()] = 0
         markets[i[8].upper()] = markets[i[8].upper()] + 1
+    filehandler.close()
     return markets
 
 
@@ -64,13 +65,12 @@ def correlate_data(file1, file2, newfile):
     Args: file1 should be inspections_results.csv, file2 should be
     green_markets.json, newfile is file to be written
     """
-    
     food = get_score_summary(file1)
     green = get_market_density(file2)
     out = {}
-    for k, v in food.iteritems():
-        for i, j in green.iteritems():
+    for k, p in food.iteritems():
+        for j in green.values():
             out[k] = (v[1], j / v[0])
-    fh = open(newfile, 'w')
-    json.dump(out, fh)
-    fh.close()
+    filehandler = open(newfile, 'w')
+    json.dump(out, filehandler)
+    filehandler.close()
