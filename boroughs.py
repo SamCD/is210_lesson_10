@@ -9,7 +9,7 @@ GRADING = {'A': 100.0, 'B': 90.0, 'C': 80.0, 'D': 70.0, 'F': 60.0}
 def get_score_summary(filename):
     """Average scores for each borough
 
-    Args: filename: name of the file to parse
+    Args: filename = name of the file to parse
 
     Ex: get_score_summary('inspection_results.csv')
     >>> {'BRONX': (156, 0.9762820512820514), 'BROOKLYN':
@@ -21,87 +21,56 @@ def get_score_summary(filename):
     fh = open(filename, 'r')
     line = fh.readline()
     restos = {}
+    scores = {}
     while line:
-        rest = {line[0]: [line[10], line[1]]}
-        if (line[10] is True) and (line[10] != 'P'):
-            restos.update(rest)
+        if line[0] not in restos and line[10] is True and line[10] != 'P':
+            restos[line[0]] = (line[10], line[1])
             line = fh.readline()
-        else:
-            line = fh.readline()
-            continue
-    fh.close()
-    bx = 0
-    bxscore = 0.0
-    bk = 0
-    bkscore = 0.0
-    mh = 0
-    mhscore = 0.0
-    qu = 0
-    quscore = 0.0
-    si = 0
-    siscore = 0.0
+        fh.close()
     for i, j in restos.values():
-        if j == 'BRONX':
-            bx += 1
-            if i == 'A':
-                bxscore += 100.0
-            elif i == 'B':
-                bxscore += 90.0
-            elif i == 'C':
-                bxscore += 80.0
-            elif i == 'D':
-                bxscore += 70.0
-            else:
-                bxscore += 60.0
-        elif j == 'BROOKLYN':
-            bk += 1
-            if i == 'A':
-                bkscore += 100.0
-            elif i == 'B':
-                bkscore += 90.0
-            elif i == 'C':
-                bkscore += 80.0
-            elif i == 'D':
-                bkscore += 70.0
-            else:
-                bkscore += 60.0
-        elif j == 'MANHATTAN':
-            mh += 1
-            if i == 'A':
-                mhscore += 100.0
-            elif i == 'B':
-                mhscore += 90.0
-            elif i == 'C':
-                mhscore += 80.0
-            elif i == 'D':
-                mhscore += 70.0
-            else:
-                mhscore += 60.0
-        elif j == 'QUEENS':
-            qu += 1
-            if i == 'A':
-                quscore += 100.0
-            elif i == 'B':
-                quscore += 90.0
-            elif i == 'C':
-                quscore += 80.0
-            elif i == 'D':
-                quscore += 70.0
-            else:
-                quscore += 60.0
-        else:
-            si += 1
-            if i == 'A':
-                siscore += 100.0
-            elif i == 'B':
-                siscore += 90.0
-            elif i == 'C':
-                siscore += 80.0
-            elif i == 'D':
-                siscore += 70.0
-            else:
-                siscore += 60.0
-        scores = {'BRONX': (bx, (bxscore / bx)), 'BROOKLYN': (bk, (bkscore / bk)),
-                  'STATEN ISLAND': (si, (siscore / si)), 'MANHATTAN': (mh / (mhscore)),
-                  'QUEENS': (qu, (quscore / qu))}
-        return scores
+        if j not in scores:
+            scores[j] = (0, 0)
+        scores[j] = (scores[j][0] + 1, scores[j][1] + GRADING.get(i))
+    for k, v in scores.iteritems():
+        v[1] = v / k
+    return scores
+
+import json
+
+
+def get_market_density(filename):
+    """Distribution of greenmarkets by borough
+
+    Args: filname = name of file to parse
+
+    Ex: >>> get_market_density('green_markets.json')
+    {u'STATEN ISLAND': 2, u'BRONX ': 1, u'BROOKLYN': 48, u'BRONX': 31,
+    u'MANHATTAN': 39, u'QUEENS': 16}
+    """
+    
+    fh = open(filename, 'r')
+    newdict = json.load(fh)
+    markets = {}
+    for i in newdict.get('data'):
+        if i[8].upper() not in markets:
+            markets[i[8].upper()] = 0
+        markets[i[8].upper()] = markets[i[8].upper()] + 1
+    return markets
+
+
+def correlate_data(file1, file2, newfile):
+    """Combines restaurant and greenmarket data into new metric
+
+    Args: file1 should be inspections_results.csv, file2 should be
+    green_markets.json, newfile is file to be written
+    """
+    
+    food = get_score_summary(file1)
+    green = get_market_density(file2)
+    out = {}
+    for k, v in food.iteritems():
+        for i, j in green.iteritems():
+            out[k] = (v[1], j / v[0])
+    fh = open(newfile, 'w')
+    json.dump(out, fh)
+    fh.close()
