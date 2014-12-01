@@ -18,23 +18,37 @@ def get_score_summary(filename):
     (414, 0.9719806763285017)}
     """
     filehandler = open(filename, 'r')
+
+    unique = {}
+
+    line = filehandler.readline()
     line = filehandler.readline()
     restos = {}
     scores = {}
     while line:
-        if line[0] not in restos and line[10] is True and line[10] != 'P':
-            restos[line[0]] = (line[10], line[1])
-            line = filehandler.readline()
-        filehandler.close()
-    for i, j in restos.values():
-        if j not in scores:
-            scores[j] = (0, 0)
-        scores[j] = [scores[j][0] + 1, scores[j][1] + GRADING.get(i)]
-    for value in scores.values():
-        value[1] = value[1] / value[0]
-    for key, value in scores.iteritems():
-        scores[key] = tuple(value)
-    return scores
+        lineparts = line.split(',')
+        camis = cleanup(lineparts[0])
+        boro = cleanup(lineparts[1])
+        grade = cleanup(lineparts[10])
+        if lineparts[10] and not lineparts[10].upper() == 'P':
+            unique[camis] = (boro, grade)
+        line = fhandler.readline()
+
+    fhandler.close()
+
+    boros = []
+    for key, data in unique.iteritems():
+        if data[0] not in boros:
+            boros[data[0]] = [0, 0]
+        boros[data[0]][0] += 1
+        boros[data[0]][1] += GRADE[data[1]]
+
+    return [{k: (v[0], v[1] / v[0])} for k, v in boros.iteritems()]
+
+
+def cleanup(data):
+    """Cleanup"""
+    return data.strip().upper()
 
 import json
 
@@ -49,28 +63,35 @@ def get_market_density(filename):
     u'MANHATTAN': 39, u'QUEENS': 16}
     """
     filehandler = open(filename, 'r')
-    newdict = json.load(filehandler)
-    markets = {}
-    for i in newdict.get('data'):
-        if i[8].upper() not in markets:
-            markets[i[8].upper()] = 0
-        markets[i[8].upper()] = markets[i[8].upper()] + 1
-    filehandler.close()
-    return markets
+    data = json.load(filehandler)['data']
+    fhandler.close()
+
+    boros = {}
+    for row in data:
+        boro = cleanup(row[8])
+        if boro not in boros:
+            boros[boro] = 0
+        boros[boro] += 1
+
+    return boros
 
 
-def correlate_data(file1, file2, newfile):
+def correlate_data(scoresfile, marketfile, outfile):
     """Combines restaurant and greenmarket data into new metric
 
     Args: file1 should be inspections_results.csv, file2 should be
     green_markets.json, newfile is file to be written
     """
-    food = get_score_summary(file1)
-    green = get_market_density(file2)
-    out = {}
-    for key, value in food.iteritems():
-        for j in green.values():
-            out[key] = (value[1], j / value[0])
-    filehandler = open(newfile, 'w')
-    json.dump(out, filehandler)
-    filehandler.close()
+    scores = get_score_summary(scoresfile)
+    markets = get_market_density(marketfile)
+    correlated = {}
+
+    for boro, score in scores.iteritems():
+        density = float(markets[boro]) / score[0]
+        correlation[boro] = (score[1], density)
+
+    fhandler = open(outfile, 'w')
+    json.dump(correlated, fhandler)
+    fhandler.close()
+
+    return correlated
